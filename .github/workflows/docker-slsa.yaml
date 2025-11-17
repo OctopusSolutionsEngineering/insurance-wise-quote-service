@@ -1,19 +1,22 @@
 name: Build and Push Docker Image - SLSA
 
 on:
-  #push:
-  #  paths:
-  #    - "API/**"
-  #  branches:
-  #    - main
+  push:
+    paths:
+      - "API/**"
+    branches:
+      - main
   workflow_dispatch: {}
 
 env:
-  OCTOPUS_URL: https://your.octopus.app
-  OCTOPUS_SERVICE_ACCOUNT: service account id
-  OCTOPUS_SPACE: Your space
-  DOCKER_HUB_REPOSITORY: Your docker hub repository
-  SBOM_PACKAGE: YourApp.SBOM
+  OCTOPUS_URL: https://wrg.octopus.app
+  OCTOPUS_SERVICE_ACCOUNT: b45a10cc-1380-480d-ab25-28e36d54cd63
+  OCTOPUS_SPACE: New Cascadia Imports
+  DOCKER_HUB_REPOSITORY: octopussolutionsengineering/insurance-wise
+  SBOM_PACKAGE: InsuranceWise.SBOM
+  ARTIFACTORY_URL: https://artifactory.octopussamples.com/artifactory
+  ARTIFACTORY_REPOSITORY: demo-octopus-app-generic
+  ARTIFACTORY_ORG: app.octopus.wrg.new-cascadia-imports
 
 jobs:
   configure:
@@ -196,11 +199,14 @@ jobs:
             ${{ env.SBOM_PACKAGE }}
           version: "${{ needs.configure.outputs.version }}"
 
-      - name: Push packages to Octopus 🐙
-        uses: OctopusDeploy/push-package-action@v3
-        with:
-          packages: |
-            packaged/${{ env.SBOM_PACKAGE }}.${{ needs.configure.outputs.version }}.zip
+      - name: Upload packages to Artifactory
+        run: |
+          packageSourceFileName="${{ env.SBOM_PACKAGE }}.${{ needs.configure.outputs.version }}.zip"
+          packageSource="./packaged/$packageSourceFileName"
+          packageTargetFileName="${{ env.SBOM_PACKAGE }}-${{ needs.configure.outputs.version }}.zip"
+          url="${{ env.ARTIFACTORY_URL }}/${{ env.ARTIFACTORY_REPOSITORY }}/${{ env.ARTIFACTORY_ORG }}/${{ env.SBOM_PACKAGE }}/$packageTargetFileName"
+          curl -v --user ${{ secrets.ARTIFACTORY_USER }}:${{ secrets.ARTIFACTORY_PASSWORD }} -T $packageSource -X PUT $url
+          echo "Uploaded package to Artifactory: $url"
 
   create_attestations:
     name: Create Attestations
