@@ -1,18 +1,15 @@
 name: Build and Push Docker Image - Quick
 
 on:
-  #push:
-  #  paths:
-  #    #- "API/**"
-  #  branches:
-  #    - main
+  pull_request:
+    types: [opened, reopened]
   workflow_dispatch: {}
 
 env:
-  OCTOPUS_URL: https://your.octopus.app
-  OCTOPUS_SERVICE_ACCOUNT: service account id
-  OCTOPUS_SPACE: Your space
-  DOCKER_HUB_REPOSITORY: Your docker hub repository
+  OCTOPUS_URL: https://wrg.octopus.app
+  OCTOPUS_SERVICE_ACCOUNT: b45a10cc-1380-480d-ab25-28e36d54cd63
+  OCTOPUS_SPACE: New Cascadia Imports
+  DOCKER_HUB_REPOSITORY: octopussolutionsengineering/insurance-wise
 
 jobs:
   build:
@@ -30,7 +27,7 @@ jobs:
 
       - name: Set version number
         id: version-generator
-        run: echo "version=$(date +'%y.%m.%d%H%M%S')-quick" >> $GITHUB_OUTPUT
+        run: echo "version=$(date +'%y.%m.%d%H%M%S')-${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
       - name: Login to Octopus Deploy
         uses: OctopusDeploy/login@v1
@@ -65,3 +62,11 @@ jobs:
           sbom: false
           tags: |
             ${{ env.DOCKER_HUB_REPOSITORY }}:${{ steps.version-generator.outputs.version }}
+
+      - name: Create a release in Octopus Deploy 🐙
+        uses: OctopusDeploy/create-release-action@v3
+        with:
+          project: 'Insurance Wise - Quote Service'
+          custom_fields: branch:${{ github.ref_name }}
+          package_version: ${{ steps.version-generator.outputs.version }}
+          channel: "Ephemeral Environments"
