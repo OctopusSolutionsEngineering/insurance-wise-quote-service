@@ -1,0 +1,24 @@
+variable "Project.Deployment.Replicas" {
+    value "4" {
+        environment = ["production"]
+    }
+
+    value "2" {
+        environment = ["development", "homologation"]
+    }
+
+    value "1" {
+        description = ""
+        environment = ["pull-requests"]
+    }
+}
+
+variable "Project.Docker.Account" {
+    type = "UsernamePasswordAccount"
+
+    value "artifactory-user" {}
+}
+
+variable "Project.WindowSize" {
+    value "1" {}
+}

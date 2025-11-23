@@ -1,0 +1,83 @@
+step "check-for-missing-environment-variable-values" {
+    name = "Check for missing Environment variable values"
+
+    action {
+        excluded_environments = ["pull-requests"]
+        properties = {
+            CheckParameters.Octopus.ApiKey = "#{Shared.Octopus.ApiKey}"
+            Octopus.Action.Template.Id = "ActionTemplates-41"
+            Octopus.Action.Template.Version = "2"
+        }
+        worker_pool = "hosted-ubuntu"
+    }
+}
+
+process_template "verify-artifacts" {
+    name = "Verify Artifacts"
+    process_template_slug = "deploy-process-verify-build-artifacts"
+    version_mask = "8.X"
+
+    package_parameter "Template.SBOM.Artifact" {
+        feed = "octopus-server-built-in"
+        package_id = "InsuranceWise.SBOM"
+    }
+
+    parameter "Template.Git.AuthToken" {
+        value = "#{BankEase.GitHub.Token}"
+    }
+
+    parameter "Template.Verify.WorkerPool" {
+        value = "WorkerPools-24"
+    }
+
+    parameter "Template.Verify.ExecutionContainerFeed" {
+        value = "Feeds-1028"
+    }
+
+    parameter "Template.Docker.Account" {
+        value = "Project.Docker.Account"
+    }
+
+    parameter "Template.Environments.Ephemeral" {
+        value = "Environments-61"
+    }
+}
+
+process_template "kubernetes-rolling" {
+    name = "Kubernetes - Rolling"
+    process_template_slug = "kubernetes-rolling"
+    version_mask = "11.X"
+
+    package_parameter "Template.Container" {
+        feed = "docker-hub"
+        package_id = "octopussolutionsengineering/insurance-wise"
+    }
+
+    parameter "Template.Environment.Production" {
+        value = "Environments-22"
+    }
+
+    parameter "Template.Tag" {
+        value = "demo-k8s-cluster"
+    }
+
+    parameter "Template.Deployment.Replicas" {
+        value = "#{Project.Deployment.Replicas}"
+    }
+
+    parameter "Template.WindowSize" {
+        value = "#{Project.WindowSize}"
+    }
+
+    parameter "Template.Labels.Component" {
+        value = "insurance-wise-app"
+    }
+
+    parameter "Template.Service.Port" {
+        value = "8080"
+    }
+
+    parameter "Template.Application.Name" {
+        value = "IW Quote Service"
+    }
+}

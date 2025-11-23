@@ -1,0 +1,68 @@
+name = "Delete namespace"
+default_guided_failure_mode = "EnvironmentDefault"
+description = ""
+
+connectivity_policy {
+    allow_deployments_to_no_targets = true
+}
+
+run_retention_policy {
+    quantity_to_keep = 100
+}
+
+process {
+    step "delete-namespace-generate-configuration" {
+        name = "Delete namespace-Generate configuration"
+
+        action {
+            action_type = "Octopus.Script"
+            properties = {
+                Octopus.Action.Blueprint.ConsumingAction.Name = "Delete namespace"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    $environmentSlug = $OctopusParameters["Octopus.Environment.Slug"]
+                    $projectSlug = $OctopusParameters["Octopus.Project.Slug"]
+                    $spaceSlug = $OctopusParameters["Octopus.Space.Slug"]
+                    
+                    $namespace = "$spaceSlug-$projectSlug-$environmentSlug"
+                    
+                    Set-OctopusVariable -Name "Namespace" -Value $namespace
+                    
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "PowerShell"
+                Octopus.ProcessTemplate.Slug = "delete-kubernetes-namespace"
+                Octopus.ProcessTemplate.Version = "2.0.0"
+                OctopusUseBundledTooling = "False"
+                Template.Octopus.WorkerPool = "WorkerPools-24"
+                Template.Tag = "demo-k8s-cluster"
+            }
+            worker_pool_variable = "#{Template.Octopus.WorkerPool}"
+        }
+    }
+
+    step "delete-namespace-delete-namespace" {
+        name = "Delete namespace-Delete namespace"
+        properties = {
+            Octopus.Action.TargetRoles = "#{Template.Tag}"
+        }
+
+        action {
+            action_type = "Octopus.KubernetesRunScript"
+            properties = {
+                Octopus.Action.Blueprint.ConsumingAction.Name = "Delete namespace"
+                Octopus.Action.Script.ScriptBody = <<-EOT
+                    $clusterNamespace = $OctopusParameters["Octopus.ProcessTemplate.Action[Generate configuration].Output.Namespace"]
+                    
+                    kubectl delete namespace $clusterNamespace
+                    EOT
+                Octopus.Action.Script.ScriptSource = "Inline"
+                Octopus.Action.Script.Syntax = "PowerShell"
+                Octopus.ProcessTemplate.Slug = "delete-kubernetes-namespace"
+                Octopus.ProcessTemplate.Version = "2.0.0"
+                Template.Octopus.WorkerPool = "WorkerPools-24"
+                Template.Tag = "demo-k8s-cluster"
+            }
+            worker_pool_variable = ""
+        }
+    }
+}
