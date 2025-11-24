@@ -27,7 +27,7 @@ jobs:
 
       - name: Set version number
         id: version-generator
-        run: echo "version=$(date +'%y.%m.%d%H%M%S')-${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        run: echo "version=$(date +'%y.%m.%d%H%M%S')-${{ github.head_ref }}" >> $GITHUB_OUTPUT
 
       - name: Login to Octopus Deploy
         uses: OctopusDeploy/login@v1
@@ -67,6 +67,6 @@ jobs:
         uses: OctopusDeploy/create-release-action@v3
         with:
           project: 'Insurance Wise - Quote Service'
-          custom_fields: branch:${{ github.ref_name }}
+          custom_fields: branch:${{ github.head_ref }}
           package_version: ${{ steps.version-generator.outputs.version }}
           channel: "Ephemeral Environments"

@@ -32,7 +32,8 @@ public class FeaturesController : ControllerBase
         var details = new FeatureDetails
         {
             FeatureOne = await _featureClient.GetBooleanValueAsync("feature-one", false),
-            FeatureTwo = await _featureClient.GetBooleanValueAsync("feature-two", false)
+            FeatureTwo = await _featureClient.GetBooleanValueAsync("feature-two", false),
+            FeatureThree = await _featureClient.GetBooleanValueAsync("feature-three", false)
         };
 
         return details;
