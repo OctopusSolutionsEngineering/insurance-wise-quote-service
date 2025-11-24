@@ -31,6 +31,7 @@ public class FeaturesController : ControllerBase
 
         var details = new FeatureDetails
         {
+            AIQuoteGen = await _featureClient.GetBooleanValueAsync("ai-quote-generation", false),
             FeatureOne = await _featureClient.GetBooleanValueAsync("feature-one", false),
             FeatureTwo = await _featureClient.GetBooleanValueAsync("feature-two", false)
         };
