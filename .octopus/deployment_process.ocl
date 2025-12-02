@@ -74,10 +74,14 @@ process_template "kubernetes-rolling" {
     }
 
     parameter "Template.Service.Port" {
-        value = "8080"
+        value = "80"
     }
 
     parameter "Template.Application.Name" {
         value = "IW Quote Service"
+    }
+
+    parameter "Template.Service.TargetPort" {
+        value = "80"
     }
 }
